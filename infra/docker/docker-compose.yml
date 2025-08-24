@@ -1,0 +1,44 @@
+services:
+  # api:
+  #   image: api
+  #   build:
+  #     context: ./api
+  #     dockerfile: ./api/Dockerfile
+  #   init: true
+  #   depends_on:
+  #     - db
+  #   environment:
+  #     - DATABASE_URL=mongodb://db:27017
+  #   networks:
+  #     - frontend
+  #     - backend
+  #   ports:
+  #     - 3000:3000
+  #   restart: unless-stopped
+  # web:
+  #   image: web
+  #   build:
+  #     context: ./web
+  #     dockerfile: ./web/Dockerfile
+  #   init: true
+  #   volumes:
+  #     - ./web/vite.config.js:/usr/src/app/vite.config.js
+  #   networks:
+  #     - frontend
+  #   ports:
+  #     - 5173:5173
+  db:
+    image: mongo:6
+    volumes:
+      - mongo-data:/data/db
+    # environment:
+    #   - MONGO_PASS=foobarbaz
+    # networks:
+    #   - backend
+    ports:
+      - 27017:27017
+volumes:
+  mongo-data:
+# networks:
+#   frontend:
+#   backend:
