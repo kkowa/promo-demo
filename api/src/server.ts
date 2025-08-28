@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import applications from "./routes/applications.js";
 import { getDb } from "./db.js";
+import { mountSwagger } from "./swagger/index.js";
 
 (async () => {
   try {
@@ -26,6 +27,8 @@ import { getDb } from "./db.js";
     });
 
     app.use("/applications", applications);
+
+    await mountSwagger(app);
 
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);

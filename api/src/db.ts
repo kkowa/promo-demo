@@ -136,7 +136,6 @@ if (process.argv.includes("--seed")) {
     .then(async () => {
       // close underlying client if you keep it global in getDb()
       const db = await getDb();
-      // @ts-expect-error accessing internal client for demo cleanup
       await (db as any).client?.close?.();
     })
     .catch((err) => {
