@@ -1,36 +1,35 @@
-# Pining same version for stability
-FROM node:22.18.0-alpine3.22 AS base
-
-# Specifing working directory other than /
+# Pin exact Node for stability
+FROM node:22.18.0-alpine AS base
 WORKDIR /usr/src/app
 
-# Copping only files required to install
-# dependencies for better layer caching
+# Only copy lock + manifest for better cache
 COPY package*.json ./
 
-FROM base as dev
-
-RUN --mount=type=cache,target=/usr/src/app/.npm \
-  npm set cache /usr/src/app/.npm && \
-  npm install
-
-COPY . .
-
-CMD ["npm", "run", "dev"]
-
-FROM base AS build
-# Install ALL deps (incl. dev) for TypeScript compile
+# ---------- Development ----------
+FROM base AS dev
+# Reproducible install (dev deps included)
 RUN --mount=type=cache,target=/usr/src/app/.npm \
     npm set cache /usr/src/app/.npm && \
     npm ci
-# Copy only what’s needed to build (faster cache; bring tsconfig, src)
+# Bring in the rest of the source
+COPY . .
+# Dev command (nodemon will watch files; mount your workspace as a volume)
+CMD ["npm", "run", "dev"]
+
+# ---------- Build ----------
+FROM base AS build
+# Install ALL deps (incl dev) for TypeScript compile
+RUN --mount=type=cache,target=/usr/src/app/.npm \
+    npm set cache /usr/src/app/.npm && \
+    npm ci
+# Copy only what's needed to build
 COPY tsconfig*.json ./
 COPY src ./src
-# Compile to dist/ (assumes: "build": "tsc")
+# Compile to dist/
 RUN npm run build
 
-FROM base as production
-
+# ---------- Production ----------
+FROM node:22.18.0-alpine AS production
 ENV NODE_ENV=production
 WORKDIR /usr/src/app
 
@@ -40,22 +39,12 @@ RUN --mount=type=cache,target=/usr/src/app/.npm \
     npm set cache /usr/src/app/.npm && \
     npm ci --omit=dev
 
-# Copy compiled JS, not TS sources
+# Copy compiled output only (no TS sources)
 COPY --from=build /usr/src/app/dist ./dist
-
-
-# Copy the healthcheck script - To be created
-# COPY --chown=node:node ./healthcheck/ .
-
-# Copy remaining source code AFTER installing dependencies. 
-# Again, copy only the necessary files
-COPY --chown=node:node ./src/ .
 
 # Drop privileges
 USER node
 
-# App port
 EXPOSE 3000
-
-# Start compiled server (adjust if your entry differs)
+# Start compiled server
 CMD ["node", "dist/server.js"]

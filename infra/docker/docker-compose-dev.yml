@@ -1,0 +1,106 @@
+services:
+  api-node:
+    build:
+      context: ../../api
+      dockerfile: Dockerfile
+      target: dev
+    container_name: api-dev
+    working_dir: /usr/src/app
+    command: npm run dev
+    volumes:
+      - ../../api:/usr/src/app
+      - node_modules:/usr/src/app/node_modules
+    environment:
+      NODE_ENV: development
+      PATH: /usr/src/app/node_modules/.bin:${PATH}
+      PORT: 3000
+      MONGO_URI: ${MONGO_URI}
+      MONGO_DB: ${MONGO_DB}
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  seed:
+    build:
+      context: ../../api
+      dockerfile: Dockerfile
+      target: dev
+    image: api-dev
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      MONGO_DB: ${MONGO_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+    working_dir: /usr/src/app
+    command: npx ts-node src/db.ts --seed
+    networks:
+      - backend
+    restart: "no"
+
+  mongo-express:
+    image: mongo-express:1.0.2-20
+    container_name: mongo-express
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@db:27017/?authSource=admin
+      ME_CONFIG_BASICAUTH: "true"
+      ME_CONFIG_BASICAUTH_USERNAME: "dev"
+      ME_CONFIG_BASICAUTH_PASSWORD: "dev"
+    ports:
+      - "8081:8081"
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  db:
+    image: mongo:7.0.14-jammy
+    container_name: mongo-dev
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    networks:
+      - backend
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data-dev:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--username",
+          "${MONGO_INITDB_ROOT_USERNAME}",
+          "--password",
+          "${MONGO_INITDB_ROOT_PASSWORD}",
+          "--authenticationDatabase",
+          "admin",
+          "--eval",
+          "db.adminCommand({ ping: 1 })",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  node_modules:
+  mongo-data-dev:
+
+networks:
+  frontend:
+  backend:

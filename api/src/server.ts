@@ -1,37 +1,37 @@
-import express, { application } from "express";
+// src/server.ts
+import express from "express";
 import cors from "cors";
 import applications from "./routes/applications.js";
 import { getDb } from "./db.js";
 
-// Basic Express server setup
-const app = express();
-// Use environment variable PORT or default to 3000
-const PORT = process.env.PORT || 3000;
-
-// Middleware setup
-app.use(cors());
-app.use(express.json());
-
-// Basic route for testing
-app.get("/api/promo", (req, res) => {
-  res.json({ message: "Welcome to the Promo API!" });
-});
-
-// Health check endpoint
-app.get("/health", async (_req, res) => {
+(async () => {
   try {
-    // Simulate db connection
-    await (await getDb()).command({ ping: 1 });
-    // If successful, return ok: true
-    res.json({ ok: true });
-  } catch (error) {
-    // If there's an error, return ok: false with status 500
-    res.status(500).json({ ok: false });
-  }
-});
+    const app = express();
+    const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
-app.use("/applications", applications);
-// Import and use the applications router
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+    app.use(cors());
+    app.use(express.json());
+
+    app.get("/api/promo", (_req, res) => {
+      res.json({ message: "Welcome to the Promo API!" });
+    });
+
+    app.get("/health", async (_req, res) => {
+      try {
+        await (await getDb()).command({ ping: 1 });
+        res.json({ ok: true });
+      } catch (e) {
+        res.status(500).json({ ok: false });
+      }
+    });
+
+    app.use("/applications", applications);
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("BOOTSTRAP FAILURE:", err);
+    process.exit(1);
+  }
+})();
