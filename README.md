@@ -5,7 +5,7 @@ A minimal demo to streamline the promotion request process:
 - Employee submits a promotion application,
 - Line manager reviews, returns with a comment, or approves.
 
-Tech (so far): Node.js with Express (TypeScript) for the backend, MongoDB, Docker (development mode).  
+Tech (so far): Node.js with Express (TypeScript) for the backend, MongoDB, Docker (development mode). Swagger for API documentation.
 Frontend and the rest will be added next.
 
 ---
@@ -49,7 +49,11 @@ curl -X POST http://localhost:3000/applications \
   }'
 ```
 
-### 3 Development Architecture
+### 3 API Endpoints and schemas documentation
+
+http://localhost:3000/docs/
+
+### 4 Development Architecture
 
 ```mermaid
 flowchart LR
