@@ -1,11 +1,5 @@
 node_modules
 .npm
-.env
 .env.dev
-.env.staging
 .env.prod
-
 .DS_Store
-
-
-package-lock.json
