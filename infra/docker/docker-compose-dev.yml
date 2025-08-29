@@ -6,12 +6,16 @@ services:
       target: dev
     container_name: api-dev
     working_dir: /usr/src/app
-    command: npm run dev
+    command: >
+      sh -lc 'if [ ! -d node_modules/@asteasolutions ] || [ ! -d node_modules/swagger-ui-express ];
+              then echo "Installing dev deps into named volume…"; npm ci; fi;
+              npm run dev'
     volumes:
       - ../../api:/usr/src/app
       - node_modules:/usr/src/app/node_modules
     environment:
       NODE_ENV: development
+      ENABLE_DOCS: "true"
       PATH: /usr/src/app/node_modules/.bin:${PATH}
       PORT: 3000
       MONGO_URI: ${MONGO_URI}
