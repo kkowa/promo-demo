@@ -1,7 +1,7 @@
 import { MongoClient, Db } from "mongodb";
 import type { Application } from "./types.js";
 
-let client: MongoClient;
+let client: MongoClient | undefined;
 
 export async function getDb(): Promise<Db> {
   try {
@@ -26,7 +26,6 @@ async function seed() {
   // --- Users ---
   const users = db.collection("users");
   await users.updateOne(
-    { _id: "mgr_1" },
     {
       $setOnInsert: {
         _id: "mgr_1",
@@ -42,7 +41,6 @@ async function seed() {
   );
 
   await users.updateOne(
-    { _id: "emp_1" },
     {
       $setOnInsert: {
         _id: "emp_1",
@@ -144,5 +142,11 @@ if (process.argv.includes("--seed")) {
     });
 }
 
-// Also export if you want to call from tests
 export { seed };
+
+export async function closeDb() {
+  if (client) {
+    await client.close();
+    client = undefined;
+  }
+}
